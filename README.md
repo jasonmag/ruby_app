@@ -1,4 +1,4 @@
-# Log line parser - SP Tech Assessment
+# Log line parser
 
 First clone the repo, or extract the git repo from the zip file I've provided.
 
