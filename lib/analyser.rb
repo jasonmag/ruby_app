@@ -1,4 +1,3 @@
-
 require_relative "scanner"
 require_relative "in_memory_repository"
 
@@ -20,10 +19,7 @@ class Analyser
       repo.store(path,ip)
     end
 
-    output_stream.puts "Page paths ordered by hits:"
-    repo.each_by_hits.each do |record|
-      output_stream.puts "#{record[:path]} #{record[:uniques]} uniques"
-    end
+    self.send "display_sort_by", "hits", "uniques"
   end
 
   private
@@ -35,5 +31,14 @@ class Analyser
 
   def repo
     @repo ||= repo_class.new
+  end
+
+  def display_sort_by(*args)
+    args.each do |value|
+      output_stream.puts "\n\rPage paths order by #{value}:"
+      repo.each_by(value).each do |record|
+        output_stream.puts "#{record[:path]} #{record[:"#{value}"]} #{value}"
+      end
+    end
   end
 end

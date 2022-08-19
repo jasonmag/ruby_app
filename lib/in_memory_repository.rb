@@ -5,12 +5,8 @@ class InMemoryRepository
     increment_unique(path, ip)
   end
 
-  def each_by_hits
-    registry.values.sort {|a,b| b[:hits] <=> a[:hits]}
-  end
-
-  def each_by_uniques
-    registry.values.sort {|a,b| b[:uniques] <=> a[:uniques]}
+  def each_by(key)
+    registry.values.sort {|a,b| b[:"#{key}"] <=> a[:"#{key}"]}
   end
 
   private
