@@ -14,17 +14,17 @@ describe Analyser do
   let(:output_stream) { double(:stdout, puts: nil) }
 
   # could also use mock classes here; class MockScanner < Struct.new(:handle); end
-  let(:scanner_klass) { double(:scanner_klass, new: mock_scanner) }
+  let(:scanner_class) { double(:scanner_class, new: mock_scanner) }
   let(:mock_scanner) { double(:scanner, each_entry: "") }
-  let(:repo_klass) { double(:repo_klass, new: mock_repo) }
+  let(:repo_class) { double(:repo_class, new: mock_repo) }
   let(:mock_repo) { double(:repo, each_by_hits: [], each_by_uniques: []) }
 
   subject(:analyser) {
     Analyser.new(
       handle: handle,
       output_stream: output_stream,
-      scanner_klass: scanner_klass,
-      repo_klass: repo_klass,
+      scanner_class: scanner_class,
+      repo_class: repo_class,
     )
   }
 

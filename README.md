@@ -1,54 +1,59 @@
-# Log line parser
+# Webpage Views and Visits Logs
 
-First clone the repo, or extract the git repo from the zip file I've provided.
+To start the app on finding out the page views and unique visits. 
 
-Then, using ruby 2.4 (see .ruby-version), `bundle install`.
+You need to clone first the repository to your local unit:
 
-Finally, the tests can be run with `rspec` or the full script run with
-`./parser.rb fixtures/webserver.log`
+Using ssh:
+1. `git clone git@github.com:jasonmag/ruby_app.git`
+
+Note: Your local unit ssh key must have permission to access the repository.
+
+Using https:
+1. `git clone https://github.com/jasonmag/ruby_app.git`
+2. Enter your Github username and password to able to clone the repository.
+
+By now, you must have the local copy from github repository. Next is to run
+bundler. Using the Ruby version 3.1.2, run `bundle install` 
 
 ## Architecture
 
-The basic plan here was to create a "glue" class, called from the command-line
-script, which accepts a "file IO" stream (i.e. the log file to analyse), and
-uses a Scanner and a Repository to perform analysis on that file.
+The application basically check the server logs given to determine the number
+of visits and unique visits based on the log files given. Intention for the
+app is to run in the terminal running under the required Ruby version. 
 
-The scanner is responsible for parsing the file, and yielding the hostname and
-IP to the caller, line by line.
+The business logic of the app processes the log file, and segregate the list
+based on the uniqueness of visits on the the logs. It will save each line of 
+the log file and save it by `path`, `hits`, and `uniques` as an object in the
+array.
 
-The repository accepts those lines, and stores them into memory, to be queried
-later using inefficient sorting and counting queries.
+After the app process the log data, this will return with two kinds of list
+of hits and unique visits. This will give the user insights of the data that 
+is being process, by simply displaying the data.
 
-Eventually, the repository could be made more intelligent, parsing each line as
-it comes in and using that to build a data structure (or two) that can be
-queried fast later on to display the data -- this is similar to how a database
-would "index" data, and update those indexes as new data comes in. See below
-for a discussion of this.
+## Functionality
 
-Using dependency injection to send in the Scanner and Repository objects allows
-flex; a different log file format can be handled with a different Scanner, and
-a different storage mechanism (like, for example, Elasticsearch or MySQL or..)
-could be swapped out by switching the repository.
+To run the application, run the following inside the repositry below:
 
-## Review vs brief
+`ruby parser.rb fixtures/webserver.log`
 
-### Functionality
+Note: the command `ruby` is optional, based on your local setup for the language.
 
-Lists paths by both page views and uniques. Correct values are obtained.
-
-I've verified this with bash commands. Script output on the test file:
+After running the command, a display if data information should appear, like 
+the sample output below.
 
 ```
-$./parser.rb fixtures/webserver.log
-Page paths ordered by hits:
-/about/2 90 visits
-/contact 89 visits
-/index 82 visits
-/about 81 visits
-/help_page/1 80 visits
-/home 78 visits
+$ ruby parser.rb fixtures/webserver.log
 
-Page paths ordered by uniques:
+Page paths order by hits:
+/about/2 90 hits
+/contact 89 hits
+/index 82 hits
+/about 81 hits
+/help_page/1 80 hits
+/home 78 hits
+
+Page paths order by uniques:
 /help_page/1 23 uniques
 /contact 23 uniques
 /home 23 uniques
@@ -57,24 +62,19 @@ Page paths ordered by uniques:
 /about 21 uniques
 ```
 
-Picking "/about/2" as an example, we can verify this with the following commands:
+By checking the each data output is correct, you can check by running the 
+following command.
 
 ```
-$ cat fixtures/webserver.log | grep /about/2 | sort | wc -l
+$ cat fixtures/webserver.log | grep /about/2 | sort |wc -l
 90
-
-$ cat fixtures/webserver.log | grep /about/2 | sort | uniq | wc -l
+$ cat fixtures/webserver.log | grep /about/2 | sort |uniq|wc -l
 22
 ```
 
-These figures match with the output of the parser.
+## Efficiency
 
-### Efficiency
-
-#### Of code
-
-I'm biased, but I like the architecture here. The separation of
-responsibilities is clean and clear in most cases.
+### Code
 
 * `parser.rb` - command-line usage only; argument validation, obtaining a file handle.
 * `lib/analyser.rb` - acts somewhat like a "controller", connecting a Scanner,
@@ -87,11 +87,7 @@ too far, but it's a nice easy step for future enhancement to replace it with a
 database backed key which could improve sorting and querying efficiency for
 large files.
 
-It's also possible that the `Analyser` does a bit too much, and should hand off
-to another class to render output to the screen (an `OutputRenderer` or
-similar).
-
-#### Of speed
+### Data Processing
 
 This hasn't been my focus for this exercise; the implemented system is probably
 O(3n) as it needs to iterate through the provided set three times to produce
@@ -112,12 +108,6 @@ Alternatively, the use of bash commands above to generate these figures implies
 that a command-line solution using a combination of `sed` / `awk` / `sort` /
 `uniq` should be possible with little effort, and is likely to be much more
 performant.
-
-### Readability
-
-To ensure clear legibility, I've kept my method names short but descriptive,
-and there is a comprehensive test suite with test names and contexts written
-mostly in accordance with `betterspecs.org`
 
 ### Tests
 
@@ -145,11 +135,3 @@ have committed my latest coverage report to this repository.
   sorting the data as required for larger datasets.
 * `lib/scanner.rb` - use of `String#split` here might be brittle with truncated
   or corrupted datasets.
-
-### Other ways to solve the issue at scale
-
-* Use bash commands (`awk`, `sed`, `uniq`, `sort`) to solve the problem with
-  unix pipes.
-* Install an ELK stack and have the webserver log directly to that, then query
-  it directly using Kibana's query syntax.
-* Use a third-party tool such as logmatic.io, papertrail, loggly or graylog.
